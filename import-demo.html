@@ -1,0 +1,31 @@
+<!doctype html><html lang="uk"><head><script defer src="cache-init.js?v=2.3.36"></script><meta charset="utf-8"><link rel="icon" type="image/png" href="assets/images/lemonade-logo.png"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Демонстраційні рецепти | LemonSqueezy</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/config/firebase.js"></script><script src="js/data/demo-recipes.js"></script><script src="js/data/demo-extra.js"></script><script src="js/app/search-index.js"></script><script defer src="js/app/ui-v18.js"></script></head><body><header class="top"><nav class="shell nav"><a class="logo" href="index.html"><img class="lemon-logo-mark" src="assets/images/lemonade-logo.png" alt="" width="38" height="38">LemonSqueezy.</a><a href="recipes.html">Рецепти</a><a href="favorites.html">Вибране</a><a href="account.html">Мій акаунт</a></nav></header><main class="shell"><section class="section"><h1>Наповнення деморецептами</h1><p>Додати 36 готових рецептів до Cloud Firestore. Дані записуються від імені поточного користувача; після імпорту він буде автором цих рецептів.</p><p id="who" class="muted">Перевіряємо авторизацію...</p><button id="import" disabled>Імпортувати 36 рецептів</button><p class="muted">Повторний імпорт пропускає вже створені деморецепти. Сторінку імпорту не потрібно публікувати на GitHub Pages.</p><p id="status" role="status"></p><pre id="log" style="white-space:pre-wrap;line-height:1.7"></pre><p><a href="recipes.html">Переглянути каталог</a></p></section></main><script>
+(function(){
+'use strict';
+const button=document.getElementById('import'), who=document.getElementById('who'), log=document.getElementById('log'), status=document.getElementById('status');
+let currentUser=null;
+const line=s=>{log.textContent+=s+'\n';};
+auth.onAuthStateChanged(u=>{currentUser=u;who.textContent=u?'Авторизовано: '+u.email:'Увійди через login.html, потім повернися сюди.';button.disabled=!u;},e=>{status.textContent=e.message;});
+button.addEventListener('click',async()=>{
+ if(!currentUser)return;
+ button.disabled=true;status.textContent='Імпорт триває...';let added=0,skipped=0,errors=0;
+ let existingIds;
+ try {
+  const snapshot=await db.collection('recipes').where('status','==','published').get({source:'server'});
+  existingIds=new Set(snapshot.docs.map(doc=>doc.id));
+ } catch(e) {
+  status.textContent='Не вдалося отримати список рецептів: '+(e.code||'')+' '+e.message;
+  line(status.textContent);button.disabled=false;return;
+ }
+ for(const r of [...DEMO_RECIPES,...DEMO_EXTRA_RECIPES]){
+  const ref=db.collection('recipes').doc(r.id);
+  try{
+   if(existingIds.has(r.id)){skipped++;line('Пропущено: '+r.title);continue;}
+   const {id,...fields}=r;
+   const batch=db.batch();batch.set(ref,{...fields,authorId:currentUser.uid,status:'published',createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});LS_SEARCH_INDEX.mark(batch,ref,false);await batch.commit();
+   added++;line('Додано: '+r.title);
+  }catch(e){errors++;line('Помилка «'+r.title+'»: '+(e.code||'')+' '+e.message);}
+ }
+ status.textContent='Готово. Додано: '+added+'; уже існували: '+skipped+'; помилок: '+errors+'.';button.disabled=!currentUser;
+});
+})();
+</script></body></html>

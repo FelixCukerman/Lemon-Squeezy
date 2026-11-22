@@ -1,0 +1,132 @@
+<!doctype html><html lang="uk"><head><script defer src="cache-init.js?v=2.3.36"></script><meta charset="utf-8"><link rel="icon" type="image/png" href="assets/images/lemonade-logo.png"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Заміна каталогу | LemonSqueezy</title><link rel="stylesheet" href="css/style.css">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="js/config/firebase.js"></script><script src="js/data/recipes-64.js"></script><script src="js/app/search-index.js"></script></head>
+<body><header class="top"><nav class="shell nav"><a class="logo" href="index.html"><img class="lemon-logo-mark" src="assets/images/lemonade-logo.png" alt="" width="38" height="38">LemonSqueezy.</a><a href="admin.html">Адмінпанель</a></nav></header>
+<main class="shell"><section class="section"><h1>Заміна всього каталогу</h1>
+<p>Операція <strong>без резервної копії</strong>. Буде видалено всі документи колекцій <code>recipes</code>, <code>comments</code>, <code>ratings</code>, <code>favorites</code>, <code>recipeViews</code>, а потім додано 64 рецепти й перебудовано пошуковий індекс.</p>
+<p>Користувачі, профілі та довідник інгредієнтів не змінюються. Під час імпорту іншим користувачам не слід створювати нові рецепти.</p>
+<p class="muted" id="who">Перед імпортом перевірте Firebase та уважно прочитайте попередження. Операція незворотна.</p>
+<p><label for="confirmPhrase">Для підтвердження введіть <strong>ВИДАЛИТИ ВСЕ</strong></label></p>
+<input id="confirmPhrase" autocomplete="off" placeholder="ВИДАЛИТИ ВСЕ" disabled>
+<button id="start" disabled>Видалити всі рецепти й імпортувати 64</button>
+<div class="panel"><h2>Безпечна перевірка перед імпортом</h2><p>Спочатку перевірте читання. Окремий інтеграційний тест тимчасово створює рецепт і маркер пошуку, перевіряє їх та видаляє. Він не запускає імпорт.</p><button type="button" id="preflight" disabled>Перевірити Firebase (без змін)</button><button type="button" id="writeTest" disabled>Тест запису й видалення (тимчасовий рецепт)</button><pre id="preflightResults" style="white-space:pre-wrap;overflow:auto"></pre></div><p role="status" id="status"></p><pre id="log" style="white-space:pre-wrap;line-height:1.6;max-height:360px;overflow:auto"></pre>
+<p><a href="recipes.html">Переглянути каталог</a></p></section></main>
+<script>
+(function(){
+'use strict';
+const who=document.getElementById('who'),start=document.getElementById('start'),input=document.getElementById('confirmPhrase'),status=document.getElementById('status'),log=document.getElementById('log');
+let adminUser=null,busy=false;const IMPORT_ENABLED=true;const preflight=document.getElementById('preflight'),preflightResults=document.getElementById('preflightResults'),writeTest=document.getElementById('writeTest');
+function say(s){status.textContent=s;log.textContent+=new Date().toLocaleTimeString()+'  '+s+'\n';}
+function enable(){start.disabled=!IMPORT_ENABLED||busy||!adminUser||input.value.trim()!=='ВИДАЛИТИ ВСЕ'}
+input.addEventListener('input',enable);
+auth.onAuthStateChanged(async u=>{
+ adminUser=null;input.disabled=true;preflight.disabled=true;writeTest.disabled=true;enable();
+ if(!u){who.textContent='Увійдіть у свій акаунт.';return}
+ try{const a=await db.collection('admins').doc(u.uid).get({source:'server'});
+ if(!a.exists){who.textContent='Немає прав адміністратора.';return}
+ adminUser=u;input.disabled=false;preflight.disabled=false;writeTest.disabled=false;who.textContent='Адміністратор: '+(u.email||u.uid);enable();
+ }catch(e){who.textContent='Не вдалося перевірити права: '+e.message}
+});
+preflight.addEventListener('click',async()=>{
+ if(!adminUser)return;
+ preflight.disabled=true;preflightResults.textContent='Firebase Project ID: '+firebase.app().options.projectId+'\nПеревірка…\n';let passed=0;
+ for(const name of ['recipes','favorites','ratings','comments','recipeViews','searchIndex','searchIndexChanges']){
+  try{const snap=await db.collection(name).limit(1).get({source:'server'});passed++;preflightResults.textContent+=name+': читання дозволено, '+(snap.empty?'немає документів':'є документи')+'\n';}
+  catch(e){preflightResults.textContent+=name+': ПОМИЛКА '+(e.code||'')+' '+e.message+'\n';}
+ }
+ preflightResults.textContent+='Перевірка читання: '+passed+'/7 колекцій. '+(passed===7?'Успішно.':'Є помилки доступу.')+' Запис, видалення та імпорт ще не перевірені.\n';
+ preflight.disabled=false;
+});
+writeTest.addEventListener('click',async()=>{
+ if(!adminUser)return;
+ if(!confirm('Тест запише й видалить тимчасовий рецепт та маркер у ПОТОЧНОМУ Firebase-проєкті. Рекомендується тестовий проєкт. Продовжити?'))return;
+ writeTest.disabled=true;
+ const testId='ls-integration-test-'+adminUser.uid;
+ const ref=db.collection('recipes').doc(testId);
+ const marker=db.collection('searchIndexChanges').doc(testId);
+ const report=s=>{preflightResults.textContent+=s+'\n'};
+ let created=false;
+ try{
+  const [existing,oldMarker]=await Promise.all([ref.get({source:'server'}),marker.get({source:'server'})]);
+  if(existing.exists||oldMarker.exists)throw Error('Тестові документи вже існують. Не перезаписуємо їх. Перевірте recipes/'+testId+' і searchIndexChanges/'+testId);
+  const r=LS_RECIPES_64[0],{id,...fields}=r;
+  const batch=db.batch();
+  batch.set(ref,{...fields,title:'ТЕСТ: '+fields.title,authorId:adminUser.uid,status:'published',createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  window.LS_SEARCH_INDEX.mark(batch,ref,false);
+  await batch.commit();created=true;report('1/5 Створення рецепта та маркера: успішно.');
+  const [recipeSnap,markerSnap]=await Promise.all([ref.get({source:'server'}),marker.get({source:'server'})]);
+  if(!recipeSnap.exists||!markerSnap.exists||markerSnap.data().deleted!==false)throw Error('Створений рецепт або маркер не читається.');
+  report('2/5 Читання рецепта та маркера: успішно.');
+  const cleanup=db.batch();cleanup.delete(ref);window.LS_SEARCH_INDEX.mark(cleanup,ref,true);
+  await cleanup.commit();report('3/5 Видалення рецепта та позначка видалення: успішно.');
+  const [removed,deletedMarker]=await Promise.all([ref.get({source:'server'}),marker.get({source:'server'})]);
+  if(removed.exists||!deletedMarker.exists||deletedMarker.data().deleted!==true)throw Error('Не підтверджено видалення рецепта або позначку видалення.');
+  report('4/5 Перевірка видалення: успішно.');
+  await marker.delete();
+  const finalMarker=await marker.get({source:'server'});
+  if(finalMarker.exists)throw Error('Маркер залишився після очищення.');
+  created=false;report('5/5 Очищення маркера: успішно.');
+  report('ІНТЕГРАЦІЙНИЙ ТЕСТ ПРОЙДЕНО. Це не тест повного імпорту 64 рецептів або видалення інших колекцій.');
+ }catch(e){
+  report('ТЕСТ НЕ ПРОЙДЕНО: '+(e.code||'')+' '+e.message);
+  if(created)report('УВАГА: перевірте вручну recipes/'+testId+' та searchIndexChanges/'+testId+'. Автоматичне очищення після помилки не запускається, щоб не приховати причину.');
+ }finally{writeTest.disabled=!adminUser}
+});
+// Small commits avoid Firestore's per-batch rules document-access limit.
+// Never infer deletion from a successful commit alone: verify on the server.
+const PURGE_BATCH_SIZE=4;
+async function purge(name){
+ let total=0,round=0;
+ while(true){
+  const snap=await db.collection(name).limit(PURGE_BATCH_SIZE).get({source:'server'});
+  if(snap.empty){say(name+': підтверджено порожню колекцію; видалено '+total);break;}
+  round++;
+  const batch=db.batch();
+  for(const d of snap.docs){
+   batch.delete(d.ref);
+   if(name==='recipes')window.LS_SEARCH_INDEX.mark(batch,d.ref,true);
+  }
+  say(name+': пакет '+round+', спроба видалити '+snap.size+' документів.');
+  try{await batch.commit();}
+  catch(e){throw Error('Колекція '+name+', пакет '+round+': '+(e.code||'')+' '+e.message);}
+  const checked=await Promise.all(snap.docs.map(d=>d.ref.get({source:'server'})));
+  const remaining=snap.docs.filter((_,i)=>checked[i].exists).map(d=>d.id);
+  if(remaining.length)throw Error(name+': сервер підтвердив, що документи залишилися: '+remaining.join(', '));
+  total+=snap.size;
+  say(name+': підтверджено видалення '+total+' документів.');
+ }
+ return total;
+}
+async function importAll(){
+ let count=0;
+ for(const r of LS_RECIPES_64){
+  const {id,...fields}=r;
+  const ref=db.collection('recipes').doc(id);
+  const batch=db.batch();
+  batch.set(ref,{...fields,authorId:adminUser.uid,status:'published',createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  window.LS_SEARCH_INDEX.mark(batch,ref,false);
+  await batch.commit();count++;
+  if(count%8===0||count===LS_RECIPES_64.length)say('Імпортовано '+count+'/64');
+ }
+ return count;
+}
+start.addEventListener('click',async()=>{
+ if(!IMPORT_ENABLED||busy||!adminUser||input.value.trim()!=='ВИДАЛИТИ ВСЕ')return;
+ if(!confirm('УВАГА: усі поточні рецепти, коментарі, оцінки, вибране та перегляди будуть безповоротно видалені. Резервної копії немає. Продовжити?'))return;
+ busy=true;enable();input.disabled=true;
+ try{
+  say('Firebase Project ID: '+firebase.app().options.projectId);say('Починаємо незворотну заміну. Не закривайте сторінку.');
+  // Delete related records first. Rules must allow admin deletion for all collections.
+  for(const name of ['favorites','ratings','comments','recipeViews','recipes'])await purge(name);
+  say('Старі записи видалено. Починаємо імпорт.');
+  const count=await importAll();
+  say('Перебудова пошукового індексу…');
+  const result=await window.LS_SEARCH_INDEX.rebuild(s=>say(s),true);
+  const verify=await db.collection('recipes').get({source:'server'});if(verify.size!==64||result.count!==64)throw Error('Після імпорту: recipes='+verify.size+', searchIndex='+result.count+'; очікується 64/64.');say('ГОТОВО: перевірено 64 рецепти й 64 записи індексу.');
+ }catch(e){
+  say('ПОМИЛКА: '+(e.code||'')+' '+e.message+'. Процес зупинено. Дані можуть бути частково замінені. Не запускайте повторно без перевірки колекцій.');
+ }finally{busy=false;input.value='';input.disabled=!adminUser;enable()}
+});
+})();
+</script></body></html>
