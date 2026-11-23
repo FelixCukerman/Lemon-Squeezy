@@ -1,1 +1,77 @@
-<!doctype html><html lang="uk"><head><script defer src="cache-init.js?v=2.3.36"></script><meta charset="utf-8"><link rel="icon" type="image/png" href="assets/images/lemonade-logo.png"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Реєстрація | LemonSqueezy</title><link rel="stylesheet" href="css/style.css"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/config/firebase.js"></script><script src="js/data/recipe-art-map.js"></script><script src="js/app/app.js"></script><script src="js/app/profile.js"></script><script defer src="js/app/ui-v18.js"></script></head><body data-page="register"><header class="top"><nav class="shell nav"><a class="logo" href="index.html"><img class="lemon-logo-mark" src="assets/images/lemonade-logo.png" alt="" width="38" height="38">LemonSqueezy<span style="color:#e6ae45">.</span></a><a href="recipes.html">Рецепти</a><a href="favorites.html">Вибране</a><a href="create-recipe.html" id="createLink" hidden>Додати рецепт</a><a href="account.html" id="accountLink">Увійти</a></nav></header><main class="shell"><section class="panel form"><h1>Створити акаунт</h1><form id="authForm"><label for="displayName">Ваше ім’я</label><input id="displayName" required minlength="2" maxlength="60" autocomplete="nickname"><label for="email">Email</label><input id="email" type="email" required autocomplete="email"><label for="password">Пароль (від 6 символів)</label><input id="password" type="password" required minlength="6" autocomplete="new-password"><label for="confirm">Повторити пароль</label><input id="confirm" type="password" required minlength="6" autocomplete="new-password"><p><button id="submit">Зареєструватися</button></p></form><p class="muted">Уже є акаунт? <a href="login.html"><u>Увійти</u></a></p></section><p id="status" role="status" class="status"></p></main><footer><div class="shell">LemonSqueezy · Рецепти, якими хочеться ділитися</div></footer></body></html>
+<!doctype html>
+<html lang="uk">
+  <head>
+    <script defer src="cache-init.js?v=2.3.36"></script>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="assets/images/lemonade-logo.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Реєстрація | LemonSqueezy</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/config/firebase.js"></script>
+    <script src="js/data/recipe-art-map.js"></script>
+    <script src="js/app/app.js"></script>
+    <script src="js/app/profile.js"></script>
+    <script defer src="js/app/ui-effects.js"></script>
+  </head>
+
+  <body data-page="register">
+    <header class="top">
+      <nav class="shell nav">
+        <a class="logo" href="index.html"
+          ><img
+            class="lemon-logo-mark"
+            src="assets/images/lemonade-logo.png"
+            alt=""
+            width="38"
+            height="38"
+          />LemonSqueezy<span style="color: #e6ae45">.</span></a
+        ><a href="recipes.html">Рецепти</a><a href="favorites.html">Вибране</a
+        ><a href="create-recipe.html" id="createLink" hidden>Додати рецепт</a
+        ><a href="account.html" id="accountLink">Увійти</a>
+      </nav>
+    </header>
+    <main class="shell">
+      <section class="panel form">
+        <h1>Створити акаунт</h1>
+        <form id="authForm">
+          <label for="displayName">Ваше ім’я</label
+          ><input
+            id="displayName"
+            required
+            minlength="2"
+            maxlength="60"
+            autocomplete="nickname"
+          /><label for="email">Email</label
+          ><input id="email" type="email" required autocomplete="email" /><label
+            for="password"
+            >Пароль (від 6 символів)</label
+          ><input
+            id="password"
+            type="password"
+            required
+            minlength="6"
+            autocomplete="new-password"
+          /><label for="confirm">Повторити пароль</label
+          ><input
+            id="confirm"
+            type="password"
+            required
+            minlength="6"
+            autocomplete="new-password"
+          />
+          <p><button id="submit">Зареєструватися</button></p>
+        </form>
+        <p class="muted">
+          Уже є акаунт? <a href="login.html"><u>Увійти</u></a>
+        </p>
+      </section>
+      <p id="status" role="status" class="status"></p>
+    </main>
+    <footer>
+      <div class="shell">LemonSqueezy · Рецепти, якими хочеться ділитися</div>
+    </footer>
+  </body>
+</html>

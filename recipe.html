@@ -1,1 +1,51 @@
-<!doctype html><html lang="uk"><head><script defer src="cache-init.js?v=2.3.45"></script><meta charset="utf-8"><link rel="icon" type="image/png" href="assets/images/lemonade-logo.png"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Рецепт | LemonSqueezy</title><link rel="stylesheet" href="css/style.css?v=2.3.45"><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script><script src="js/config/firebase.js"></script><script src="js/app/search-index.js?v=2.3.45"></script><script src="js/app/dietary.js"></script><script src="js/data/recipe-art-map.js"></script><script src="js/data/photo-map.js"></script><script src="js/app/app.js?v=2.3.45"></script><script src="js/app/profile.js"></script><script src="js/app/metrics.js"></script><script src="js/app/v09.js"></script><script defer src="js/app/ui-v18.js"></script><script defer src="js/app/features-v20.js"></script></head><body data-page="recipe"><header class="top"><nav class="shell nav"><a class="logo" href="index.html"><img class="lemon-logo-mark" src="assets/images/lemonade-logo.png" alt="" width="38" height="38">LemonSqueezy<span style="color:#e6ae45">.</span></a><a href="recipes.html">Рецепти</a><a href="favorites.html">Вибране</a><a href="create-recipe.html" id="createLink" hidden>Додати рецепт</a><a href="account.html" id="accountLink">Увійти</a></nav></header><main class="shell"><section class="section" id="recipe"><p>Завантажуємо рецепт...</p></section><p id="status" role="status" class="status"></p></main><footer><div class="shell">LemonSqueezy · Рецепти, якими хочеться ділитися</div></footer></body></html>
+<!doctype html>
+<html lang="uk">
+  <head>
+    <script defer src="cache-init.js?v=2.3.45"></script>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="assets/images/lemonade-logo.png" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Рецепт | LemonSqueezy</title>
+    <link rel="stylesheet" href="css/style.css?v=2.3.45" />
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script src="js/config/firebase.js"></script>
+    <script src="js/app/search-index.js?v=2.3.45"></script>
+    <script src="js/app/dietary.js"></script>
+    <script src="js/data/recipe-art-map.js"></script>
+    <script src="js/data/photo-map.js"></script>
+    <script src="js/app/app.js?v=2.3.45"></script>
+    <script src="js/app/profile.js"></script>
+    <script src="js/app/metrics.js"></script>
+    <script src="js/app/recipe-tools.js"></script>
+    <script defer src="js/app/ui-effects.js"></script>
+    <script defer src="js/app/recipe-features.js"></script>
+  </head>
+  <body data-page="recipe">
+    <header class="top">
+      <nav class="shell nav">
+        <a class="logo" href="index.html"
+          ><img
+            class="lemon-logo-mark"
+            src="assets/images/lemonade-logo.png"
+            alt=""
+            width="38"
+            height="38"
+          />LemonSqueezy<span style="color: #e6ae45">.</span></a
+        ><a href="recipes.html">Рецепти</a><a href="favorites.html">Вибране</a
+        ><a href="create-recipe.html" id="createLink" hidden>Додати рецепт</a
+        ><a href="account.html" id="accountLink">Увійти</a>
+      </nav>
+    </header>
+    <main class="shell">
+      <section class="section" id="recipe">
+        <p>Завантажуємо рецепт...</p>
+      </section>
+      <p id="status" role="status" class="status"></p>
+    </main>
+    <footer>
+      <div class="shell">LemonSqueezy · Рецепти, якими хочеться ділитися</div>
+    </footer>
+  </body>
+</html>
