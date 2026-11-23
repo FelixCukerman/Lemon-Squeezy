@@ -245,19 +245,6 @@
         !!note.dataset.index || busy || complete || items.length >= MAX;
       allButton.hidden =
         !!note.dataset.index || busy || complete || items.length >= MAX;
-      note.textContent = note.dataset.index
-        ? "Пошук за компактним індексом з автоматичним урахуванням змін. " +
-          (note.dataset.changes || "0") +
-          " записів змін (загалом)."
-        : busy
-          ? "Завантажуємо…"
-          : complete
-            ? "Пошук охоплює весь доступний каталог. Дані кешуються в цій вкладці до 10 хвилин."
-            : items.length >= MAX
-              ? "Досягнуто межі 5 000 рецептів. Пошук може бути неповним."
-              : "Зараз завантажено " +
-                items.length +
-                " рецептів. Пошук і кількість результатів поки неповні. Натисни «Шукати в усьому каталозі» для повного пошуку (це витрачає читання Firestore).";
     }
     function update() {
       const next = sig();
